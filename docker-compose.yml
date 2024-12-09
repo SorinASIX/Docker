@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./build/schema.sql:/docker-entrypoint.initdb.d/schema.sql
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  bookmedik:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: bookmedik
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./build:/var/www/html
+    networks:
+      - backend-network
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+
+networks:
+  backend-network:
+
+volumes:
+  mariadb_data:
+
